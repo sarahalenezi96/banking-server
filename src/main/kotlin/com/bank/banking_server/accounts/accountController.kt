@@ -14,7 +14,7 @@ class AccountController(private val accountService: AccountService) {
 
     @PostMapping("/accounts")
     fun createAccount(@RequestBody body: CreateAccountRequest): Account =
-        accountService.createAccount(body.userId, body.name, body.initialBalance)
+        accountService.createAccount(body)
 
     @PostMapping("/accounts/{accountNumber}/close")
     fun closeAccount(@PathVariable accountNumber: String): ResponseEntity<Void> {
@@ -34,6 +34,7 @@ class AccountController(private val accountService: AccountService) {
 data class CreateAccountRequest(
     val userId: Long,
     val name: String,
+    val accountNumber: String,
     val initialBalance: Double
 )
 

@@ -17,7 +17,7 @@ class TransactionService(
 
     fun listTransactions(): List<Transaction> = transactionRepo.findAll()
 
-    // Add this method clearly to fix your error:
+
     fun getHistory(accountNumber: String): List<Transaction> {
         return transactionRepo.findByAccountNumber(accountNumber)
     }

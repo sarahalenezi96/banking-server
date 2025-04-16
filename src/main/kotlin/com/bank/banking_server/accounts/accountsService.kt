@@ -11,12 +11,12 @@ class AccountService(
     private val userRepo: UserRepository,
     private val transactionService: TransactionService
 ) {
-    fun createAccount(userId: Long, name: String, initialBalance: Double): Account {
-        val user = userRepo.findById(userId).orElseThrow { Exception("User not found") }
+    fun createAccount(request: CreateAccountRequest): Account {
+        val user = userRepo.findById(request.userId).orElseThrow()
         val account = Account(
-            accountNumber = UUID.randomUUID().toString(),
-            name = name,
-            balance = initialBalance,
+            accountNumber = request.accountNumber,
+            name = request.name,
+            balance = request.initialBalance,
             user = user
         )
         return accountRepo.save(account)
@@ -26,7 +26,7 @@ class AccountService(
 
     fun closeAccount(accountNumber: String) {
         val account = accountRepo.findByAccountNumber(accountNumber) ?: throw Exception("Account not found")
-        account.isClosed = true
+        account.isActive = false
         accountRepo.save(account)
     }
 
@@ -36,7 +36,7 @@ class AccountService(
         val source = accountRepo.findByAccountNumber(sourceAccountNumber) ?: throw Exception("Source account not found")
         val destination = accountRepo.findByAccountNumber(destinationAccountNumber) ?: throw Exception("Destination account not found")
 
-        if (source.isClosed || destination.isClosed) throw Exception("Cannot transfer from/to a closed account")
+        if (!source.isActive || !destination.isActive) throw Exception("Cannot transfer from/to a closed account")
         if (source.balance < amount) throw Exception("Insufficient balance")
 
         source.balance -= amount
