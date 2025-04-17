@@ -1,34 +1,50 @@
 package com.bank.banking_server.accounts
 
-import org.springframework.http.ResponseEntity
+import com.bank.banking_server.exceptions.AccountLimitExceededException
 import org.springframework.web.bind.annotation.*
-
 
 @RestController
 @RequestMapping("/accounts")
 class AccountController(private val accountService: AccountService) {
 
     @GetMapping("/accounts")
-    fun listAccounts(): Map<String, Any> =
-        mapOf("accounts" to accountService.listAccounts())
-
-    @PostMapping("/accounts")
-    fun createAccount(@RequestBody body: CreateAccountRequest): Account =
-        accountService.createAccount(body)
-
-    @PostMapping("/accounts/{accountNumber}/close")
-    fun closeAccount(@PathVariable accountNumber: String): ResponseEntity<Void> {
-        accountService.closeAccount(accountNumber)
-        return ResponseEntity.ok().build()
+    fun listAccounts(): List<Account> {
+        return accountService.listAccounts()
     }
 
-    @PostMapping("/accounts/transfer")
-    fun transfer(@RequestBody body: TransferRequest): Map<String, Any> =
-        mapOf("newBalance" to accountService.transfer(
-            body.sourceAccountNumber,
-            body.destinationAccountNumber,
-            body.amount
-        ))
+    @PostMapping
+    fun createAccount(@RequestBody body: CreateAccountRequest): Any {
+        return try {
+            accountService.createAccount(body)
+        } catch (error: AccountLimitExceededException) {
+            "Too many accounts: ${error.message}"
+        } catch (error: Exception) {
+            "Account creation error: ${error.message}"
+        }
+    }
+
+    @PostMapping("/{accountNumber}/close")
+    fun closeAccount(@PathVariable accountNumber: String): String {
+        return try {
+            accountService.closeAccount(accountNumber)
+            "Account closed successfully"
+        } catch (error: Exception) {
+            "Failed to close account: ${error.message}"
+        }
+    }
+
+    @PostMapping("/transfer")
+    fun transfer(@RequestBody body: TransferRequest): Any {
+        return try {
+            accountService.transfer(
+                body.sourceAccountNumber,
+                body.destinationAccountNumber,
+                body.amount
+            )
+        } catch (error: Exception) {
+            "Error: ${error.message}"
+        }
+    }
 }
 
 data class CreateAccountRequest(
